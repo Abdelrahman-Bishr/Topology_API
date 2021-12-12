@@ -18,7 +18,6 @@ public:
     string get_id();
     vector<map<string,string> > * get_main_attributes();
     vector<map<string, map<string,pair<string,double> > > > * get_specs(); 
-    
     friend ostream& operator<<(ostream& os, Device & dev);
 
 private:

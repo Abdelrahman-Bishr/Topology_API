@@ -32,6 +32,7 @@ Topology * JSONTopologyParser::readJSON(string filename){
     // empty file
     if (value==Json::nullValue){
         delete top;
+        cout<<"Empty file or file doesn't exist\n";
         top=nullptr;
         return top;
     }
@@ -43,7 +44,17 @@ Topology * JSONTopologyParser::readJSON(string filename){
             top->add_value(it.key(),(*it));
         }
     }
-    topologies.push_back(top);
+    bool exists = false;
+    for (vector<Topology*>::iterator it = topologies.begin();it!=topologies.end();it++){
+        if ((*it)->get_id()->asString()==top->get_id()->asString()){
+            exists=true;
+            break;
+        }
+    }
+    if(!exists){
+        topologies.push_back(top);
+        devices[top->get_id()->asString()] = top->get_devices();    
+    }
 
     return top;
 
@@ -63,33 +74,33 @@ bool JSONTopologyParser::writeJSON(string topologyID,string filename){
 
     given_topology = packages_topology_in_JSON_value(alias_top);
 
-    Topology * found_in_given_file = readJSON(filename);
-    Json::Value value_to_be_written;
+    // Topology * found_in_given_file = readJSON(filename);
+    // Json::Value value_to_be_written;
     
-    if(found_in_given_file!=nullptr){
-        cout<<"Entered file already has content , erase it and try again"<<endl;
-        return false;
+    // if(found_in_given_file!=nullptr){
+    //     cout<<"Entered file already has content , erase it and try again"<<endl;
+    //     return false;
 
-        // till now , support is for one topology per single json file
-        // // check if what is read is a single topology or a dict of topologies
-        // if(list_of_topologies(found_in_given_file)){
-        //     // continue;
-        // }
-        // else{
-        //     value_to_be_written["topology_1"] = found_in_given_file;
-        //     value_to_be_written["topology_2"] = given_topology;
-        // }
-    }
-    else{
-            value_to_be_written = given_topology;
-        }
+    //     // till now , support is for one topology per single json file
+    //     // // check if what is read is a single topology or a dict of topologies
+    //     // if(list_of_topologies(found_in_given_file)){
+    //     //     // continue;
+    //     // }
+    //     // else{
+    //     //     value_to_be_written["topology_1"] = found_in_given_file;
+    //     //     value_to_be_written["topology_2"] = given_topology;
+    //     // }
+    // }
+    // else{
+            // value_to_be_written = given_topology;
+    //     }
 
 
     Json::StreamWriterBuilder builder;
 
     std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
     std::ofstream outputfile(filename);
-    writer->write(value_to_be_written,&outputfile);
+    writer->write(given_topology,&outputfile);
     
     return true;
 }
@@ -104,51 +115,47 @@ std::vector<Topology*> & JSONTopologyParser::queryTopologies(){
 bool JSONTopologyParser::deleteTopology(string topologyID){
 
     Topology * top_to_remove = getTopology(topologyID);
+    deleteDevices(topologyID);
+    
     if (top_to_remove==nullptr){
         cout<<"Entered topology id doesn't exist\n";
         return false;
     }
+
     topologies.erase(find(topologies.begin(),topologies.end(),top_to_remove));
-    delete top_to_remove; 
+    
+    delete top_to_remove;
     top_to_remove = nullptr;
     return true;
 
 }
 
 
-vector<Device*> JSONTopologyParser::queryDevices(string TopologyID){
-    Topology * top = getTopology(TopologyID);
-    if (top==nullptr){
-        cout<<"Entered topology id doesn't exist\n";
-        vector <Device*> devices;
-        return devices;
-    }
-    vector <Device*> devices = top->get_devices(); 
-
-    return devices;
+vector<Device*> & JSONTopologyParser::queryDevices(string TopologyID){
+    return devices[TopologyID];
 }
 
 
 vector<Device*> JSONTopologyParser::queryDevicesWithNetlistNode(string TopologyID,string NetlistNodeID){
     vector <Device*> tot_devices = queryDevices(TopologyID);
-    vector <Device*> devices;
+    vector <Device*> nlnode_devices;
     int dev_size = 0;
     for(vector<Device*>::iterator dev=tot_devices.begin();dev!=tot_devices.end();dev++){
         // *dev is a device pointer
         for (specs_vec::iterator it= (*dev)->get_specs()->begin();it!= (*dev)->get_specs()->end();it++){
             for (specs_map::iterator in_it=(*it)["netlist"].begin();in_it!=(*it)["netlist"].end();in_it++){
                 if(in_it->second.first==NetlistNodeID){
-                    devices.push_back((*dev));
+                    nlnode_devices.push_back((*dev));
                     break;
                 }
             }
-            if(devices.size()>dev_size){
+            if(nlnode_devices.size()>dev_size){
                 dev_size++;
                 break;
             }
         }
     }
-    return devices;
+    return nlnode_devices;
 }
 
 
@@ -197,4 +204,14 @@ Topology * JSONTopologyParser::getTopology(string topologyID){
         }
     }
     return nullptr;
+}
+
+void JSONTopologyParser::deleteDevices(string topologyID){
+    
+    for(vector<Device*>::iterator it=devices[topologyID].begin();it!=devices[topologyID].end();it++){
+        delete (*it);
+        (*it) = nullptr;
+    }
+    devices[topologyID].clear();
+
 }

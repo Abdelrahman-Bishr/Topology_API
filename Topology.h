@@ -16,7 +16,6 @@ public:
     void set_id(Json::Value new_id);
     vector<Device*> &get_devices();
     void write();
-    // bool remove_value(Json::Value val);
     void print_devices();
     void print();
 
@@ -30,7 +29,6 @@ private:
 
     void PrintJSONValue(const Json::Value &val ,int depth);
 
-    // bool PrintJSONTree( const Json::Value &root, unsigned short depth=0);
     // 
 
 };

@@ -29,18 +29,6 @@ Device::Device(Json::Value &component){
         }
     }
 
-
-    // for (vector<map<string,map<string,pair<string,double> > > >::iterator i =specs->begin();i!=specs->end();i++){
-    //     for (map<string,map<string,pair<string,double> > >::iterator it=i->begin();it!=i->end();it++){
-    //         cout<<it->first<<" = {\n";
-    //         for (map<string,pair<string,double> >::iterator in_it=it->second.begin();in_it!=it->second.end();in_it++){
-    //             cout<<"\t\""<<in_it->first<<"\" = \""<<in_it->second.first<<"\"\n";
-    //         }
-    //         cout<<"\t}\n";            
-    //     }
-    //     cout<<"==========================================================\n";
-    // }
-
 }
 
 Device::~Device(){
